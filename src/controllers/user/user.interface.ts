@@ -1,7 +1,7 @@
 export interface User {
-    _id: string;
-    user_id: number;
-    name: string;
-    profile_image: string;
-    thumbnail_image: string;
+  _id: string;
+  userId: number;
+  name: string;
+  profileImage: string;
+  thumbnailImage: string;
 }

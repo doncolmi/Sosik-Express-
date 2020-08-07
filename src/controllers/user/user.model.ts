@@ -1,11 +1,11 @@
-import { Schema, model, Document } from 'mongoose';
-import { User } from './user.interface';
+import { Schema, model, Document } from "mongoose";
+import { User } from "./user.interface";
 
 const userSchema = new Schema({
-    user_id: Number,
-    name: String,
-    profile_image: String,
-    thumbnail_image: String,
+  userId: Number,
+  name: String,
+  profileImage: String,
+  thumbnailImage: String,
 });
 
-export default model<User & Document>('User', userSchema);
+export default model<User & Document>("User", userSchema);
