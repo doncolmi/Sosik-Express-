@@ -1,5 +1,7 @@
 import Express, { Application } from "express";
 
+import { test } from "./controllers/news/news.cron";
+
 import * as bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import { connect } from "mongoose";
@@ -18,6 +20,7 @@ class App {
     this.initializeMiddlewares();
     this.initializeErrorHandling();
     this.initializeControllers(controllers);
+    test;
   }
 
   public listen() {

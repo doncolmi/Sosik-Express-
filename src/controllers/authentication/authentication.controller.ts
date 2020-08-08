@@ -35,8 +35,6 @@ class AuthenticationController implements Controller {
 
   private login = (req: Request, res: Response, next: NextFunction) => {
     const { userId, refreshToken, tokenExp }: UserDTO = req.body;
-    console.log("이헤ㅔ에ㅔ엥에", tokenExp);
-    console.log(refreshToken);
     this.user
       .findOne({ userId: userId })
       .then((user) => {
@@ -46,6 +44,7 @@ class AuthenticationController implements Controller {
             httpOnly: true,
           });
           res.json(true);
+          return;
         }
         next();
       })
