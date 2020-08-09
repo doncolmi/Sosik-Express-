@@ -5,6 +5,7 @@ export interface News {
   contents: string;
   newsDate: string;
   href: string;
+  pressId: string;
   topicName: string;
   createdDate: Date;
   modifiedDate: Date;
@@ -18,8 +19,10 @@ export interface Press {
 }
 
 export interface newsList {
-  title: string;
+  newsId: string;
   href: string;
-  pressId: string;
-  topicName: string;
+  press: {
+    pressId: string;
+    pressName: string;
+  };
 }
