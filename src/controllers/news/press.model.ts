@@ -2,9 +2,9 @@ import { Schema, model, Document } from "mongoose";
 import { Press } from "./news.interface";
 
 const pressSchema = new Schema({
-  pressId: { type: String, index: true, required: true },
+  pressId: { type: String, index: true, required: true, unique: true },
   pressName: String,
-  pressNewsCount: Number,
+  pressNewsCount: { type: Number, default: 0 },
 });
 
 export default model<Press & Document>("Press", pressSchema);

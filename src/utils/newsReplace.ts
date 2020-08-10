@@ -9,15 +9,9 @@ const replaceText: string[] = [
   "<!-- // 본문 내용 -->",
 ];
 
-export const replaceContent = (content: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    try {
-      replaceText.forEach((element: string) => {
-        content = content.replace(element, "");
-      });
-      resolve(content);
-    } catch (e) {
-      reject(new Error(e));
-    }
+export const replaceContent = (content: any): string => {
+  replaceText.forEach((element: string) => {
+    content = content.replace(element, "");
   });
+  return content.trim();
 };

@@ -2,8 +2,11 @@ import axios, { AxiosResponse } from "axios";
 import cheerio from "cheerio";
 import iconv from "iconv-lite";
 
+import { logger } from "../../middleware/winston.middleware";
+
 import Topic from "./topic";
-import { News, Press, newsList } from "./news.interface";
+import { replaceContent } from "../../utils/newsReplace";
+import * as Inews from "./news.interface";
 import newsModel from "./news.model";
 import pressModel from "./press.model";
 import { get } from "mongoose";
@@ -12,6 +15,20 @@ class newsService {
   public news = newsModel;
   public press = pressModel;
   public topic = new Topic();
+
+  public test = async () => {
+    const Topics = this.topic.getTopicId();
+    Topics.forEach(async (Topic) => {
+      const NewsHrefList = await this.getNewsHrefList(Topic);
+      const NewsList = await this.checkDuplicate(NewsHrefList);
+      const PressSetList = await this.getPressSetList(NewsList);
+      await this.savePress(PressSetList);
+      NewsList.forEach(async (News) => {
+        const NewsContents = await this.getContents(News.href);
+        this.saveNews(News, NewsContents);
+      });
+    });
+  };
 
   public crawling = (url: string): Promise<any> => {
     return new Promise((resolve, reject): any => {
@@ -22,17 +39,17 @@ class newsService {
     });
   };
 
-  public getNewsId = (href: any): string => {
+  public getPressId = (href: any): string => {
     const codeArray = href.split("&");
     return codeArray[3].replace("oid=", "");
   };
 
-  public getPressId = (href: any): string => {
+  public getNewsId = (href: any): string => {
     const codeArray = href.split("&");
     return codeArray[4].replace("aid=", "");
   };
 
-  public getNewsHrefList = (topicId: string) => {
+  public getNewsHrefList = (topicId: string): Promise<Inews.newsList[]> => {
     const ListUrl = `https://news.naver.com/main/list.nhn?mode=LSD&mid=sec&sid1=${topicId}&listType=title`;
     return new Promise((resolve, reject) => {
       this.crawling(ListUrl)
@@ -41,12 +58,14 @@ class newsService {
             iconv.decode(crwalingData, "EUC-KR").toString()
           );
           const list: Cheerio = $("ul.type02").children("li");
-          const NewsHrefList: newsList[] = [];
+          const NewsHrefList: Inews.newsList[] = [];
           list.toArray().forEach((element) => {
             const href: string = $(element).find("a").attr("href");
             NewsHrefList.push({
               newsId: this.getNewsId(href),
               href: href,
+              title: $(element).find("a").text().trim(),
+              topicName: this.topic.getTopicName(topicId),
               press: {
                 pressId: this.getPressId(href),
                 pressName: $(element).find("span.writing").text().trim(),
@@ -59,8 +78,106 @@ class newsService {
     });
   };
 
-  public getContents = (href: string) => {
-    return new Promise((resolve, reject) => {});
+  public getContents = (href: string): Promise<Inews.newsContent> => {
+    return new Promise((resolve, reject) => {
+      this.crawling(href).then((crwalingData: Buffer) => {
+        const $: CheerioStatic = cheerio.load(
+          iconv.decode(crwalingData, "EUC-KR").toString()
+        );
+        const contentWrapper = $("div#main_content");
+        let content = $(contentWrapper).find("div#articleBodyContents").html();
+
+        if (!content)
+          content = $(contentWrapper).find("div#newsEndContents").html();
+
+        let date = $(contentWrapper)
+          .find("div.sponsor span.t11:nth-child(1)")
+          .text()
+          .trim();
+
+        if (!date)
+          date = $(contentWrapper).find("div.sponsor span.t11").text().trim();
+
+        if (!content) reject(new Error("no Contents"));
+        if (!date) reject(new Error("no Dates"));
+
+        resolve({
+          content: replaceContent(content),
+          date: date,
+        });
+      });
+    });
+  };
+
+  public savePress = (pressSetList: Set<string>): Promise<Boolean> => {
+    return new Promise((resolve, reject) => {
+      pressSetList.forEach((pressToString) => {
+        const pressInfo: string[] = pressToString.split(",");
+        const pressDto: Inews.Press = {
+          pressId: pressInfo[0],
+          pressName: pressInfo[1],
+        };
+        new pressModel(pressDto)
+          .save()
+          .then((res) => {
+            logger.info("saveInfo - Press : ", pressDto.pressName, "!save! ");
+            resolve(true);
+          })
+          .catch((err) => {
+            logger.error(new Error(err));
+            resolve(false);
+          });
+      });
+    });
+  };
+
+  public getPressSetList = (NewsList: Inews.newsList[]): Set<string> => {
+    const pressSetList: Set<string> = new Set();
+    NewsList.forEach(({ press }: Inews.newsList) => {
+      pressSetList.add(`${press.pressId},${press.pressName}`);
+    });
+    return pressSetList;
+  };
+
+  public checkDuplicate = async (
+    NewsList: Inews.newsList[]
+  ): Promise<Inews.newsList[]> => {
+    const resultList: Inews.newsList[] = [];
+    for (const elem of NewsList) {
+      const check = await newsModel.countDocuments({ newsId: elem.newsId });
+      if (check > 0) {
+        break;
+      } else resultList.push(elem);
+    }
+    return resultList;
+  };
+
+  public saveNews = (
+    NewsList: Inews.newsList,
+    NewsContent: Inews.newsContent
+  ) => {
+    new newsModel({
+      newsId: NewsList.newsId,
+      title: NewsList.title,
+      contents: NewsContent.content,
+      newsDate: NewsContent.date,
+      href: NewsList.href,
+      pressId: NewsList.press.pressId,
+      topicName: NewsList.topicName,
+    })
+      .save()
+      .then((saveInfo) => {
+        logger.info(
+          "title : ",
+          saveInfo.title,
+          ",topic : ",
+          saveInfo.topicName,
+          "save!!!"
+        );
+      })
+      .catch((err) => {
+        logger.error(new Error(err));
+      });
   };
 }
 
