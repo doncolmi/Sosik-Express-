@@ -18,7 +18,7 @@ export interface Press {
 
 export interface newsList {
   newsId: string;
-  href: string;
+  href: string | undefined;
   title: string;
   topicName: string;
   press: {

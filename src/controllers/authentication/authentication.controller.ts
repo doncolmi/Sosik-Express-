@@ -6,6 +6,8 @@ import UserDTO from "../user/user.dto";
 import validate from "../../middleware/validation.middleware";
 import userModel from "../user/user.model";
 
+import axios from 'axios';
+
 // todo: 완성해야합니다.
 
 class AuthenticationController implements Controller {
@@ -19,7 +21,7 @@ class AuthenticationController implements Controller {
   }
 
   private initializeRoutes() {
-    this.router.get(`${this.path}`, this.getCookies);
+    this.router.post(`${this.path}`, this.getCookies);
     this.router.post(
       `${this.path}/login`,
       validate(UserDTO),
@@ -29,8 +31,17 @@ class AuthenticationController implements Controller {
   }
 
   private getCookies = (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.cookies);
-    res.json(req.cookies);
+    console.log(req.headers.cookie);
+    if(req.headers.cookie) {
+      const refreshToken = req.headers.cookie.replace("refreshToken=", "");
+      axios.post(`https://kauth.kakao.com/oauth/token?grant_type=refresh_token&client_id=${process.env.CLIENT_ID}&refresh_token=${refreshToken}&client_secret=${process.env.CLIENT_SECRET}`).then(({data}) => {
+        res.json({ status : true, token: data.access_token}).end();
+      }).catch((err) => {
+        res.json({ status : false }).end();
+      });
+    } else {
+      res.json({ status : false }).end();
+    }
   };
 
   private login = (req: Request, res: Response, next: NextFunction) => {
@@ -41,7 +52,6 @@ class AuthenticationController implements Controller {
         if (user) {
           res.cookie("refreshToken", refreshToken, {
             maxAge: tokenExp,
-            httpOnly: true,
           });
           res.json(true);
           return;
@@ -57,10 +67,8 @@ class AuthenticationController implements Controller {
     userSchema
       .save()
       .then((result: any) => {
-        console.log("궁금해하던거", result);
         res.cookie("refreshToken", saveUserData.refreshToken, {
           maxAge: saveUserData.tokenExp,
-          httpOnly: true,
         });
         res.json(false);
       })

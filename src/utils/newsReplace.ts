@@ -1,3 +1,5 @@
+import { logger } from "../middleware/winston.middleware";
+
 const replaceText: string[] = [
   "<!-- 본문 내용 -->",
   "<!-- TV플레이어 -->",
@@ -9,9 +11,13 @@ const replaceText: string[] = [
   "<!-- // 본문 내용 -->",
 ];
 
-export const replaceContent = (content: any): string => {
-  replaceText.forEach((element: string) => {
-    content = content.replace(element, "");
-  });
-  return content.trim();
+export const replaceContent = (content: any): string | undefined => {
+  try{
+    replaceText.forEach((element: string) => {
+      content = content.replace(element, "");
+    });
+    return content.trim();
+  } catch(e) {
+    logger.error(e);
+  }
 };

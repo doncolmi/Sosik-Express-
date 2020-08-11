@@ -12,11 +12,11 @@ import pressModel from "./press.model";
 import { get } from "mongoose";
 
 class newsService {
-  public news = newsModel;
-  public press = pressModel;
-  public topic = new Topic();
+  private news = newsModel;
+  private press = pressModel;
+  private topic = new Topic();
 
-  public test = async () => {
+  public doCrawling = async () => {
     const Topics = this.topic.getTopicId();
     Topics.forEach(async (Topic) => {
       const NewsHrefList = await this.getNewsHrefList(Topic);
@@ -24,13 +24,14 @@ class newsService {
       const PressSetList = await this.getPressSetList(NewsList);
       await this.savePress(PressSetList);
       NewsList.forEach(async (News) => {
-        const NewsContents = await this.getContents(News.href);
-        this.saveNews(News, NewsContents);
+        this.getContents(News.href!).then(res => {
+          this.saveNews(News, res);
+        }).catch(err => logger.error(err));
       });
     });
   };
 
-  public crawling = (url: string): Promise<any> => {
+  private crawling = (url: string): Promise<any> => {
     return new Promise((resolve, reject): any => {
       axios
         .get(url, { responseType: "arraybuffer" })
@@ -39,17 +40,17 @@ class newsService {
     });
   };
 
-  public getPressId = (href: any): string => {
+  private getPressId = (href: any): string => {
     const codeArray = href.split("&");
     return codeArray[3].replace("oid=", "");
   };
 
-  public getNewsId = (href: any): string => {
+  private getNewsId = (href: any): string => {
     const codeArray = href.split("&");
     return codeArray[4].replace("aid=", "");
   };
 
-  public getNewsHrefList = (topicId: string): Promise<Inews.newsList[]> => {
+  private getNewsHrefList = (topicId: string): Promise<Inews.newsList[]> => {
     const ListUrl = `https://news.naver.com/main/list.nhn?mode=LSD&mid=sec&sid1=${topicId}&listType=title`;
     return new Promise((resolve, reject) => {
       this.crawling(ListUrl)
@@ -60,7 +61,7 @@ class newsService {
           const list: Cheerio = $("ul.type02").children("li");
           const NewsHrefList: Inews.newsList[] = [];
           list.toArray().forEach((element) => {
-            const href: string = $(element).find("a").attr("href");
+            const href: string = $(element).find("a").attr("href")!;
             NewsHrefList.push({
               newsId: this.getNewsId(href),
               href: href,
@@ -78,7 +79,7 @@ class newsService {
     });
   };
 
-  public getContents = (href: string): Promise<Inews.newsContent> => {
+  private getContents = (href: string): Promise<Inews.newsContent> => {
     return new Promise((resolve, reject) => {
       this.crawling(href).then((crwalingData: Buffer) => {
         const $: CheerioStatic = cheerio.load(
@@ -109,7 +110,7 @@ class newsService {
     });
   };
 
-  public savePress = (pressSetList: Set<string>): Promise<Boolean> => {
+  private savePress = (pressSetList: Set<string>): Promise<Boolean> => {
     return new Promise((resolve, reject) => {
       pressSetList.forEach((pressToString) => {
         const pressInfo: string[] = pressToString.split(",");
@@ -131,7 +132,7 @@ class newsService {
     });
   };
 
-  public getPressSetList = (NewsList: Inews.newsList[]): Set<string> => {
+  private getPressSetList = (NewsList: Inews.newsList[]): Set<string> => {
     const pressSetList: Set<string> = new Set();
     NewsList.forEach(({ press }: Inews.newsList) => {
       pressSetList.add(`${press.pressId},${press.pressName}`);
@@ -139,7 +140,7 @@ class newsService {
     return pressSetList;
   };
 
-  public checkDuplicate = async (
+  private checkDuplicate = async (
     NewsList: Inews.newsList[]
   ): Promise<Inews.newsList[]> => {
     const resultList: Inews.newsList[] = [];
@@ -152,7 +153,7 @@ class newsService {
     return resultList;
   };
 
-  public saveNews = (
+  private saveNews = (
     NewsList: Inews.newsList,
     NewsContent: Inews.newsContent
   ) => {
