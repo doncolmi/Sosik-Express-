@@ -4,7 +4,6 @@ import UserModel from "../user/user.model";
 import AuthenticationService from "./authentication.service";
 import UserDTO from "../user/user.dto";
 import validate from "../../middleware/validation.middleware";
-import userModel from "../user/user.model";
 
 import axios from 'axios';
 
@@ -63,7 +62,7 @@ class AuthenticationController implements Controller {
 
   private save = (req: Request, res: Response, next: NextFunction) => {
     const saveUserData: UserDTO = req.body;
-    const userSchema = new userModel(saveUserData);
+    const userSchema = new this.user(saveUserData);
     userSchema
       .save()
       .then((result: any) => {

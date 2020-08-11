@@ -31,3 +31,7 @@ export interface newsContent {
   content?: string | null;
   date?: string | null;
 }
+
+export interface getNewsListParam {
+  page: number;
+}
