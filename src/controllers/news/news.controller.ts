@@ -2,6 +2,7 @@ import { Request, Response, NextFunction, Router } from "express";
 import Controller from "../../interfaces/controller.interface";
 import NewsModel from "./news.model";
 import { getNewsListParam } from "./news.interface";
+import { json } from "envalid";
 
 class NewsController implements Controller {
     public path = "/news";
@@ -13,12 +14,20 @@ class NewsController implements Controller {
     }
 
     private initializeRoutes() {
-        this.router.get(`${this.path}`, this.getCookies);
+        this.router.get(`${this.path}`, this.getNewsListAll);
     }
 
-    private getNewsList = (({page}: getNewsListParam) => {
-        // todo: 해당 구조부터 한번 짜보자
-    })
+    private getNewsListAll = (req: Request, res: Response, next: NextFunction) => {
+        const page: number = +req.query.page!;
+        console.log(page, " 입니다.");
+        this.news
+        .find({})
+        .sort({ createdDate: -1})
+        .skip((page) * 10)
+        .limit(10)
+        .then(((result: any) => res.json(result)))
+        .catch((err: Error) => next(err));
+    }
 }
 
 export default NewsController;
