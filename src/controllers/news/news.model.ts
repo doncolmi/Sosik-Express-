@@ -8,6 +8,7 @@ const newsSchema = new Schema({
   newsDate: String,
   href: String,
   pressId: String,
+  pressName: String,
   topicName: String,
   fakeNews: { type: Number, default: 0 },
   createdDate: { type: Date, default: Date.now },
