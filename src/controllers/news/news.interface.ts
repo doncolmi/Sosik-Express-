@@ -9,13 +9,6 @@ export interface News {
   topicName: string;
 }
 
-export interface Press {
-  _id?: string;
-  pressId: string;
-  pressName: string;
-  pressNewsCount?: number;
-}
-
 export interface newsList {
   newsId: string;
   href: string | undefined;

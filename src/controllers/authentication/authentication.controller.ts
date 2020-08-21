@@ -5,7 +5,7 @@ import AuthenticationService from "./authentication.service";
 import UserDTO from "../user/user.dto";
 import validate from "../../middleware/validation.middleware";
 
-import axios from 'axios';
+import axios from "axios";
 
 // todo: 완성해야합니다.
 
@@ -31,15 +31,20 @@ class AuthenticationController implements Controller {
 
   private getCookies = (req: Request, res: Response, next: NextFunction) => {
     console.log(req.headers.cookie);
-    if(req.headers.cookie) {
+    if (req.headers.cookie) {
       const refreshToken = req.headers.cookie.replace("refreshToken=", "");
-      axios.post(`https://kauth.kakao.com/oauth/token?grant_type=refresh_token&client_id=${process.env.CLIENT_ID}&refresh_token=${refreshToken}&client_secret=${process.env.CLIENT_SECRET}`).then(({data}) => {
-        res.json({ status : true, token: data.access_token}).end();
-      }).catch((err) => {
-        res.json({ status : false }).end();
-      });
+      axios
+        .post(
+          `https://kauth.kakao.com/oauth/token?grant_type=refresh_token&client_id=${process.env.CLIENT_ID}&refresh_token=${refreshToken}&client_secret=${process.env.CLIENT_SECRET}`
+        )
+        .then(({ data }) => {
+          res.json({ status: true, token: data.access_token }).end();
+        })
+        .catch((err) => {
+          res.json({ status: false }).end();
+        });
     } else {
-      res.json({ status : false }).end();
+      res.json({ status: false }).end();
     }
   };
 

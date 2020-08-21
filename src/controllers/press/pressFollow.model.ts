@@ -1,13 +1,11 @@
 import { Schema, model, Document } from "mongoose";
-import { User } from "./user.interface";
+import { PressFollow } from "./press.interface";
 
-const userSchema = new Schema({
+const pressFollowSchema = new Schema({
+  pressId: { type: String, required: true },
   userId: { type: String, index: true, required: true },
-  name: String,
-  profileImage: String,
-  thumbnailImage: String,
   createdDate: { type: Date, default: Date.now },
   modifiedDate: { type: Date, default: Date.now },
 });
 
-export default model<User>("User", userSchema);
+export default model<PressFollow & Document>("PressFollow", pressFollowSchema);

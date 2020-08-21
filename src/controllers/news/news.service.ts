@@ -7,8 +7,9 @@ import { logger } from "../../middleware/winston.middleware";
 import Topic from "./topic";
 import { replaceContent } from "../../utils/newsReplace";
 import * as Inews from "./news.interface";
+import * as Ipress from "../press/press.interface";
 import newsModel from "./news.model";
-import pressModel from "./press.model";
+import pressModel from "../press/press.model";
 import { get } from "mongoose";
 
 class newsService {
@@ -24,9 +25,11 @@ class newsService {
       const PressSetList = await this.getPressSetList(NewsList);
       await this.savePress(PressSetList);
       NewsList.forEach(async (News) => {
-        this.getContents(News.href!).then(res => {
-          this.saveNews(News, res);
-        }).catch(err => logger.error(err));
+        this.getContents(News.href!)
+          .then((res) => {
+            this.saveNews(News, res);
+          })
+          .catch((err) => logger.error(err));
       });
     });
   };
@@ -114,11 +117,11 @@ class newsService {
     return new Promise((resolve, reject) => {
       pressSetList.forEach((pressToString) => {
         const pressInfo: string[] = pressToString.split(",");
-        const pressDto: Inews.Press = {
+        const pressDto: Ipress.Press = {
           pressId: pressInfo[0],
           pressName: pressInfo[1],
         };
-        new pressModel(pressDto)
+        new this.press(pressDto)
           .save()
           .then((res) => {
             logger.info("saveInfo - Press : ", pressDto.pressName, "!save! ");
@@ -145,7 +148,7 @@ class newsService {
   ): Promise<Inews.newsList[]> => {
     const resultList: Inews.newsList[] = [];
     for (const elem of NewsList) {
-      const check = await newsModel.countDocuments({ newsId: elem.newsId });
+      const check = await this.news.countDocuments({ newsId: elem.newsId });
       if (check > 0) {
         break;
       } else resultList.push(elem);
@@ -157,7 +160,7 @@ class newsService {
     NewsList: Inews.newsList,
     NewsContent: Inews.newsContent
   ) => {
-    new newsModel({
+    new this.news({
       newsId: NewsList.newsId,
       title: NewsList.title,
       contents: NewsContent.content,

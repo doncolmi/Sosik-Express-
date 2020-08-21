@@ -1,5 +1,5 @@
 import { Schema, model, Document } from "mongoose";
-import { Press } from "./news.interface";
+import { Press } from "./press.interface";
 
 const pressSchema = new Schema({
   pressId: { type: String, index: true, required: true, unique: true },
