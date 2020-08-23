@@ -167,6 +167,7 @@ class newsService {
       newsDate: NewsContent.date,
       href: NewsList.href,
       pressId: NewsList.press.pressId,
+      pressName: NewsList.press.pressName,
       topicName: NewsList.topicName,
     })
       .save()

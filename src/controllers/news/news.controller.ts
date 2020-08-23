@@ -12,6 +12,7 @@ class NewsController implements Controller {
     this.initializeRoutes();
   }
 
+<<<<<<< HEAD
   private initializeRoutes() {
     this.router.get(`${this.path}`, this.getNewsListAll);
   }
@@ -31,6 +32,34 @@ class NewsController implements Controller {
       .then((result: any) => res.json(result))
       .catch((err: Error) => next(err));
   };
+=======
+    private initializeRoutes() {
+        this.router.get(`${this.path}`, this.getFirstNewsListAll, this.getNewsListAll);
+    }
+
+    private getFirstNewsListAll = (req: Request, res: Response, next: NextFunction) => {
+        if(req.query.date) {
+            next();
+            return;
+        }
+        this.news
+        .find({})
+        .sort({ createdDate: -1})
+        .limit(10)
+        .then(((result: any) => res.json(result)))
+        .catch((err: Error) => next(err));
+    }
+
+    private getNewsListAll = (req: Request, res: Response, next: NextFunction) => {
+        const date: string = req.query.date as string;
+        this.news
+        .find({ "createdDate": { "$lt" : new Date(date) } })
+        .sort({ createdDate: -1})
+        .limit(10)
+        .then(((result: any) => res.json(result)))
+        .catch((err: Error) => next(err));
+    }
+>>>>>>> a52f3fdb0c79c6822892dbd6bfbe16b92a2f3db7
 }
 
 export default NewsController;
