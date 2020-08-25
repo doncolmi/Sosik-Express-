@@ -22,7 +22,11 @@ class PressController implements Controller {
 
   private initializeRoutes() {
     this.router.get(`${this.path}`, this.getPressListAll);
+    this.router.post(`${this.path}`, this.doFollow);
+    this.router.delete(`${this.path}`, this.doUnFollow);
   }
+
+  // 보안관련 인증 미들웨어 추가
 
   private getPressListAll = async (
     req: Request,
@@ -49,6 +53,48 @@ class PressController implements Controller {
           .end();
       }
       next(userInfo);
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  private doFollow = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const token: string = req.headers.authorization!;
+      const userInfo = await this.authentication.getUserByToken(token);
+      if (userInfo) {
+        const save = await new this.pressFollow({
+          pressId: req.body.pressId,
+          userId: userInfo.userId,
+        }).save();
+        if (save) res.json(true).end();
+        res.json(false).end();
+      }
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  private doUnFollow = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const token: string = req.headers.authorization!;
+      const userInfo = await this.authentication.getUserByToken(token);
+      if (userInfo) {
+        const save = this.pressFollow.deleteOne({
+          pressId: req.body.pressId,
+          userId: userInfo.userId,
+        });
+        if (save) res.json(true).end();
+        res.json(false).end();
+      }
     } catch (e) {
       next(e);
     }
