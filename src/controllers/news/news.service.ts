@@ -10,11 +10,13 @@ import * as Inews from "./news.interface";
 import * as Ipress from "../press/press.interface";
 import newsModel from "./news.model";
 import pressModel from "../press/press.model";
+import pressFollowModel from "../press/pressFollow.model";
 import { get } from "mongoose";
 
 class newsService {
   private news = newsModel;
   private press = pressModel;
+  private pressFollow = pressFollowModel;
   private topic = new Topic();
 
   public doCrawling = async () => {
@@ -183,6 +185,15 @@ class newsService {
       .catch((err) => {
         logger.error(new Error(err));
       });
+  };
+
+  public getPressFollowList = async (userId: number) => {
+    const PressFollow = await this.pressFollow.find({ userId: userId });
+    const PressFollowList: any = [];
+    PressFollow.map((element) => {
+      PressFollowList.push({ pressId: element.pressId });
+    });
+    return PressFollowList;
   };
 }
 

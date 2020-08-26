@@ -7,8 +7,6 @@ import validate from "../../middleware/validation.middleware";
 
 import axios from "axios";
 
-// todo: 완성해야합니다.
-
 class AuthenticationController implements Controller {
   public path = "/auth";
   public router = Router();
@@ -30,7 +28,6 @@ class AuthenticationController implements Controller {
   }
 
   private getCookies = (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.headers.cookie);
     if (req.headers.cookie) {
       const refreshToken = req.headers.cookie.replace("refreshToken=", "");
       axios

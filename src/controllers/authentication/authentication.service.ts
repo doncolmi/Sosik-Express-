@@ -1,14 +1,15 @@
-import CreateUserDto from "../user/user.dto";
-import { User } from "../user/user.interface";
-import UserModel from "../user/user.model";
-import KakaoToken from "../../interfaces/kakaoToken.interface";
+import { Request, Response, NextFunction } from "express";
 import userModel from "../user/user.model";
-import UserDto from "../user/user.dto";
 
 import axios from "axios";
 
 class AuthenticationService {
   public user = userModel;
+
+  public hasAuth = async (req: Request, res: Response, next: NextFunction) => {
+    if (req.headers.authorization) next();
+    else res.status(403).end();
+  };
 
   public getUserByToken = async (token: string) => {
     const tokenHeader = {
