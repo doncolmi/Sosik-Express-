@@ -4,19 +4,21 @@ import iconv from "iconv-lite";
 
 import { logger } from "../../middleware/winston.middleware";
 
-import Topic from "./topic";
+import Topic from "../topic/topic.service";
 import { replaceContent } from "../../utils/newsReplace";
 import * as Inews from "./news.interface";
 import * as Ipress from "../press/press.interface";
 import newsModel from "./news.model";
 import pressModel from "../press/press.model";
 import pressFollowModel from "../press/pressFollow.model";
+import topicFollowModel from "../topic/topicFollow.model";
 import { get } from "mongoose";
 
 class newsService {
   private news = newsModel;
   private press = pressModel;
   private pressFollow = pressFollowModel;
+  private topicFollow = topicFollowModel;
   private topic = new Topic();
 
   public doCrawling = async () => {
@@ -194,6 +196,15 @@ class newsService {
       PressFollowList.push({ pressId: element.pressId });
     });
     return PressFollowList;
+  };
+
+  public getTopicFollowList = async (userId: number) => {
+    const topicFollow = await this.topicFollow.find({ userId: userId });
+    const topicFollowList: any = [];
+    topicFollow.map((element) => {
+      topicFollowList.push({ topicName: element.topicName });
+    });
+    return topicFollowList;
   };
 }
 
