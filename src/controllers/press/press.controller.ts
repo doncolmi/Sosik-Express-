@@ -48,7 +48,6 @@ class PressController implements Controller {
           })
           .end();
       }
-      next(userInfo);
     } catch (e) {
       next(e);
     }

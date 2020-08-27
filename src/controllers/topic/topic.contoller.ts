@@ -42,7 +42,6 @@ class TopicController implements Controller {
         });
         res.json(topicNameList).end();
       }
-      next(userInfo);
     } catch (e) {
       next(e);
     }
