@@ -1,18 +1,14 @@
 import { Request, Response, NextFunction, Router } from "express";
 import Controller from "../../interfaces/controller.interface";
-import userModel from "../user/user.model";
-import pressModel from "./press.model";
-import pressFollowModel from "./pressFollow.model";
 import AuthenticationService from "../authentication/authentication.service";
+import PressService from "./press.service";
 
 class PressController implements Controller {
   public path = "/press";
   public router = Router();
 
-  private user = userModel;
-  private press = pressModel;
-  private pressFollow = pressFollowModel;
   private auth = new AuthenticationService();
+  private pressService = new PressService();
 
   constructor() {
     this.initializeRoutes();
@@ -22,6 +18,12 @@ class PressController implements Controller {
     this.router.get(`${this.path}`, this.auth.hasAuth, this.getPressListAll);
     this.router.post(`${this.path}`, this.auth.hasAuth, this.doFollow);
     this.router.delete(`${this.path}`, this.auth.hasAuth, this.doUnFollow);
+    this.router.get(`${this.path}/:name`, this.getPress);
+    this.router.get(
+      `${this.path}/:name/follow`,
+      this.auth.hasAuth,
+      this.getPressFollow
+    );
   }
 
   private getPressListAll = async (
@@ -30,24 +32,11 @@ class PressController implements Controller {
     next: NextFunction
   ) => {
     try {
-      const token: any = req.headers.authorization;
-      const userInfo = await this.auth.getUserByToken(token);
-      const pressListAll = await this.press.find({}).sort({ pressName: 1 });
-      if (userInfo) {
-        const pressIdList: any = [];
-        const pressFollowList = await this.pressFollow.find({
-          userId: userInfo.userId,
-        });
-        pressFollowList.forEach((element) => {
-          pressIdList.push(element.pressId);
-        });
-        res
-          .json({
-            pressList: pressListAll,
-            pressFollowList: pressIdList,
-          })
-          .end();
-      }
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      const PressList = await this.pressService.getPressListAll(userId);
+      res.json(PressList).end();
     } catch (e) {
       next(e);
     }
@@ -59,16 +48,11 @@ class PressController implements Controller {
     next: NextFunction
   ) => {
     try {
-      const token: string = req.headers.authorization!;
-      const userInfo = await this.auth.getUserByToken(token);
-      if (userInfo) {
-        const save = await new this.pressFollow({
-          pressId: req.body.pressId,
-          userId: userInfo.userId,
-        }).save();
-        if (save.pressId === req.body.pressId) res.json(true).end();
-        else res.json(false).end();
-      }
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      const isSave = await this.pressService.doFollow(req.body.pressId, userId);
+      res.json(isSave).end();
     } catch (e) {
       next(e);
     }
@@ -80,16 +64,43 @@ class PressController implements Controller {
     next: NextFunction
   ) => {
     try {
-      const token: string = req.headers.authorization!;
-      const userInfo = await this.auth.getUserByToken(token);
-      if (userInfo) {
-        const save = await this.pressFollow.deleteMany({
-          pressId: req.body.pressId,
-          userId: userInfo.userId,
-        });
-        if (save.deletedCount! > 0) res.json(true).end();
-        else res.json(false).end();
-      }
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      const isDelete = await this.pressService.doUnFollow(
+        req.body.pressId,
+        userId
+      );
+      res.json(isDelete).end();
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  private getPress = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      res.json(await this.pressService.getPress(req.params.name)).end();
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  private getPressFollow = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      res
+        .json(await this.pressService.getPressFollow(req.params.name, userId))
+        .end();
     } catch (e) {
       next(e);
     }
