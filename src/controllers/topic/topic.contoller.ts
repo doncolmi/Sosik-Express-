@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction, Router } from "express";
 import Controller from "../../interfaces/controller.interface";
-import userModel from "../user/user.model";
-import topicFollowModel from "./topicFollow.model";
 import AuthenticationService from "../authentication/authentication.service";
 import TopicService from "./topic.service";
 
@@ -9,8 +7,6 @@ class TopicController implements Controller {
   public path = "/topic";
   public router = Router();
 
-  private user = userModel;
-  private topicFollow = topicFollowModel;
   private auth = new AuthenticationService();
   private topic = new TopicService();
 
@@ -22,6 +18,12 @@ class TopicController implements Controller {
     this.router.get(`${this.path}`, this.auth.hasAuth, this.getTopicFollow);
     this.router.post(`${this.path}`, this.auth.hasAuth, this.doFollow);
     this.router.delete(`${this.path}`, this.auth.hasAuth, this.doUnFollow);
+    this.router.get(`${this.path}/:name`, this.getTopic);
+    this.router.get(
+      `${this.path}/:name/follow`,
+      this.auth.hasAuth,
+      this.getTopicFollowOne
+    );
   }
 
   private getTopicFollow = async (
@@ -30,18 +32,11 @@ class TopicController implements Controller {
     next: NextFunction
   ) => {
     try {
-      const token: any = req.headers.authorization;
-      const userInfo = await this.auth.getUserByToken(token);
-      if (userInfo) {
-        const topicNameList: any = [];
-        const topicFollowList = await this.topicFollow.find({
-          userId: userInfo.userId,
-        });
-        topicFollowList.forEach((element) => {
-          topicNameList.push(element.topicName);
-        });
-        res.json(topicNameList).end();
-      }
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      const topicNameList = await this.topic.getTopicFollow(userId);
+      res.json(topicNameList).end();
     } catch (e) {
       next(e);
     }
@@ -53,17 +48,11 @@ class TopicController implements Controller {
     next: NextFunction
   ) => {
     try {
-      const token: string = req.headers.authorization!;
-      const userInfo = await this.auth.getUserByToken(token);
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
       const TopicName = this.topic.getTopicName(req.body.topicId);
-      if (userInfo) {
-        const save = await new this.topicFollow({
-          topicName: TopicName,
-          userId: userInfo.userId,
-        }).save();
-        if (save.topicName === TopicName) res.json(true).end();
-        else res.json(false).end();
-      }
+      res.json(await this.topic.doFollow(userId, TopicName)).end();
     } catch (e) {
       next(e);
     }
@@ -75,18 +64,40 @@ class TopicController implements Controller {
     next: NextFunction
   ) => {
     try {
-      const token: string = req.headers.authorization!;
-      const userInfo = await this.auth.getUserByToken(token);
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
       const TopicName = this.topic.getTopicName(req.body.topicId);
+      res.json(await this.topic.doUnFollow(userId, TopicName)).end();
+    } catch (e) {
+      next(e);
+    }
+  };
 
-      if (userInfo) {
-        const save = await this.topicFollow.deleteMany({
-          topicName: TopicName,
-          userId: userInfo.userId,
-        });
-        if (save.deletedCount! > 0) res.json(true).end();
-        else res.json(false).end();
-      }
+  private getTopic = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      res.json(await this.topic.getTopic(req.params.name)).end();
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  private getTopicFollowOne = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      res
+        .json(await this.topic.getTopicFollowOne(userId, req.params.name))
+        .end();
     } catch (e) {
       next(e);
     }

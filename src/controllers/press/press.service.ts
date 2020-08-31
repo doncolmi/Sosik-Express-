@@ -1,12 +1,6 @@
-import axios, { AxiosResponse } from "axios";
-
-import { logger } from "../../middleware/winston.middleware";
-
-import * as Ipress from "./press.interface";
 import pressModel from "./press.model";
 import pressFollowModel from "./pressFollow.model";
 import newsModel from "../news/news.model";
-import { get } from "mongoose";
 
 class PressService {
   private press = pressModel;

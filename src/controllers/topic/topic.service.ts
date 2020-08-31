@@ -1,4 +1,67 @@
+import topicFollowModel from "./topicFollow.model";
+import newsModel from "../news/news.model";
+
 class Topic {
+  private topicFollow = topicFollowModel;
+  private news = newsModel;
+
+  public getTopicFollow = async (userId: number) => {
+    const topicFollowList = await this.topicFollow.find({
+      userId: userId,
+    });
+    const topicNameList = topicFollowList.map((topic) => topic.topicName);
+    return topicNameList;
+  };
+
+  public doFollow = async (userId: number, name: string) => {
+    const save = await new this.topicFollow({
+      topicName: name,
+      userId: userId,
+    }).save();
+    return save.topicName === name;
+  };
+
+  public doUnFollow = async (userId: number, name: string) => {
+    const del = await this.topicFollow.deleteMany({
+      topicName: name,
+      userId: userId,
+    });
+    return del.deletedCount! > 0;
+  };
+
+  public getTopic = async (name: string) => {
+    const topicFollowCnt: number = await this.topicFollow.countDocuments({
+      topicName: name,
+    });
+    const topicNewsCnt: number = await this.news.countDocuments({
+      topicName: name,
+    });
+    const recentTopicNews: any = await this.news
+      .find({ topicName: name })
+      .sort({ createdDate: -1 })
+      .limit(100);
+    const recentPressCnt: number = this.getRecentPress(recentTopicNews);
+    return {
+      followCnt: topicFollowCnt,
+      newsCnt: topicNewsCnt,
+      recentPress: recentPressCnt,
+    };
+  };
+
+  public getTopicFollowOne = async (userId: number, name: string) => {
+    const isFollow = await this.topicFollow.countDocuments({
+      userId: userId,
+      topicName: name,
+    });
+    return isFollow > 0;
+  };
+
+  private getRecentPress = (newsData: any): number => {
+    const PressNameList = newsData.map((news: any) => news.pressName);
+    const PressNameSet = new Set(PressNameList);
+    return PressNameSet.size;
+  };
+
   private 100 = "정치";
   private 101 = "경제";
   private 102 = "사회";

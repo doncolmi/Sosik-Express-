@@ -39,6 +39,12 @@ class NewsController implements Controller {
       this.getFirstNewsByOnlyPress,
       this.getNewsByOnlyPress
     );
+    this.router.get(
+      `${this.path}/topic/:name`,
+      this.auth.hasAuth,
+      this.getFirstNewsByOnlyTopic,
+      this.getNewsByOnlyTopic
+    );
   }
 
   private getFirstNewsListAll = (
@@ -194,6 +200,47 @@ class NewsController implements Controller {
         .find()
         .and([
           { pressName: req.params.name },
+          { createdDate: { $lt: new Date(date) } },
+        ])
+        .sort({ createdDate: -1 })
+        .limit(10)
+        .then((result: any) => res.json(result))
+        .catch((err: Error) => next(err));
+    }
+  };
+
+  private getFirstNewsByOnlyTopic = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    if (req.query.date) {
+      next();
+      return;
+    }
+    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
+    if (userInfo) {
+      this.news
+        .find({ topicName: req.params.name })
+        .sort({ createdDate: -1 })
+        .limit(10)
+        .then((result: any) => res.json(result))
+        .catch((err: Error) => next(err));
+    }
+  };
+
+  private getNewsByOnlyTopic = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const date: string = req.query.date as string;
+    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
+    if (userInfo) {
+      this.news
+        .find()
+        .and([
+          { topicName: req.params.name },
           { createdDate: { $lt: new Date(date) } },
         ])
         .sort({ createdDate: -1 })
