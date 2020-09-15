@@ -7,6 +7,7 @@ export interface News {
   href: string;
   pressId: string;
   topicName: string;
+  fakeNews: number;
 }
 
 export interface newsList {
@@ -27,4 +28,11 @@ export interface newsContent {
 
 export interface getNewsListParam {
   page: number;
+}
+
+export interface fakeNewsLog {
+  userId: number;
+  newsId: string;
+  createdDate?: Date;
+  modifiedDate?: Date;
 }

@@ -12,13 +12,14 @@ import newsModel from "./news.model";
 import pressModel from "../press/press.model";
 import pressFollowModel from "../press/pressFollow.model";
 import topicFollowModel from "../topic/topicFollow.model";
-import { get } from "mongoose";
+import fakeNewsLogModel from "./fakeNewsLog.model";
 
 class newsService {
   private news = newsModel;
   private press = pressModel;
   private pressFollow = pressFollowModel;
   private topicFollow = topicFollowModel;
+  private fakeNewsLog = fakeNewsLogModel;
   private topic = new Topic();
 
   public doCrawling = async () => {
@@ -206,6 +207,40 @@ class newsService {
     });
     return topicFollowList;
   };
+
+  public saveFakeNews = async (userId: number, newsId: string) => {
+    console.log("실행");
+    const saveData: Inews.fakeNewsLog = {
+      newsId: newsId,
+      userId: userId
+    };
+    console.log("얍얍");
+    const newsdata = await this.news.findOne({newsId: newsId}, {fakeNews: 1});
+    if(newsdata) {
+      const update = await this.news.updateOne({newsId: newsId}, { fakeNews : newsdata.fakeNews + 1});
+    } else {
+      throw new Error("can't read newsData for newsId");
+      return;
+    }
+    const save = await new this.fakeNewsLog(saveData  ).save();
+    return save.userId === userId;
+  }
+
+  public deleteFakeNews = async (userId: number, newsId: string) => {
+    const deleteData: Inews.fakeNewsLog = {
+      newsId: newsId,
+      userId: userId
+    };
+    const newsdata = await this.news.findOne({newsId: newsId}, {fakeNews: 1});
+    if(newsdata) {
+      const update = await this.news.updateOne({newsId: newsId}, { fakeNews : newsdata.fakeNews - 1});
+    } else {
+      throw new Error("can't read newsData for newsId");
+      return;
+    }
+    const deleted = await this.news.deleteMany(deleteData);
+    return deleted.deletedCount! > 0;
+  }
 }
 
 export default newsService;

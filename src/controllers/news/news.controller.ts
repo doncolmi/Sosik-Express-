@@ -45,6 +45,17 @@ class NewsController implements Controller {
       this.getFirstNewsByOnlyTopic,
       this.getNewsByOnlyTopic
     );
+    this.router.post(
+      `${this.path}/fake`,
+      this.auth.hasAuth,
+      this.saveFakeNews,
+    );
+    this.router.delete(
+      `${this.path}/fake`,
+      this.auth.hasAuth,
+      this.deleteFakeNews,
+    );
+    
   }
 
   private getFirstNewsListAll = (
@@ -249,6 +260,32 @@ class NewsController implements Controller {
         .catch((err: Error) => next(err));
     }
   };
+
+  private saveFakeNews = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      console.log(userId, req.body.newsId);
+
+      const saveFakeNews = await this.newsService.saveFakeNews(userId, req.body.newsId);
+        res.json(saveFakeNews).end();
+    } catch(e) {
+      next(e)
+    }
+  }
+
+  private deleteFakeNews = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      const deleteFakeNews = await this.newsService.deleteFakeNews(userId, req.body.newsId);
+        res.json(deleteFakeNews).end();
+    } catch(e) {
+      next(e)
+    }
+  }
 }
 
 export default NewsController;
