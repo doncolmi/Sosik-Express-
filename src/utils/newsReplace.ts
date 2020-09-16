@@ -12,12 +12,14 @@ const replaceText: string[] = [
 ];
 
 export const replaceContent = (content: any): string | undefined => {
-  try{
+  try {
     replaceText.forEach((element: string) => {
       content = content.replace(element, "");
     });
+    const aStartIndex = content.indexOf("<a");
+    if (aStartIndex !== -1) content = content.slice(0, aStartIndex - 1);
     return content.trim();
-  } catch(e) {
+  } catch (e) {
     logger.error(e);
   }
 };
