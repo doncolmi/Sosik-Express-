@@ -208,39 +208,59 @@ class newsService {
     return topicFollowList;
   };
 
-  public saveFakeNews = async (userId: number, newsId: string) => {
-    console.log("실행");
+  public getIsFakeNewsLog = async (userId: number, newsId: string) => {
     const saveData: Inews.fakeNewsLog = {
       newsId: newsId,
-      userId: userId
+      userId: userId,
     };
-    console.log("얍얍");
-    const newsdata = await this.news.findOne({newsId: newsId}, {fakeNews: 1});
-    if(newsdata) {
-      const update = await this.news.updateOne({newsId: newsId}, { fakeNews : newsdata.fakeNews + 1});
+    const newsdata = await this.fakeNewsLog.countDocuments(saveData);
+    console.log(newsdata);
+    return newsdata > 0;
+  };
+
+  public saveFakeNews = async (userId: number, newsId: string) => {
+    const saveData: Inews.fakeNewsLog = {
+      newsId: newsId,
+      userId: userId,
+    };
+    const newsdata = await this.news.findOne(
+      { newsId: newsId },
+      { fakeNews: 1 }
+    );
+    if (newsdata) {
+      const update = await this.news.updateOne(
+        { newsId: newsId },
+        { fakeNews: newsdata.fakeNews + 1 }
+      );
     } else {
       throw new Error("can't read newsData for newsId");
       return;
     }
-    const save = await new this.fakeNewsLog(saveData  ).save();
+    const save = await new this.fakeNewsLog(saveData).save();
     return save.userId === userId;
-  }
+  };
 
   public deleteFakeNews = async (userId: number, newsId: string) => {
     const deleteData: Inews.fakeNewsLog = {
       newsId: newsId,
-      userId: userId
+      userId: userId,
     };
-    const newsdata = await this.news.findOne({newsId: newsId}, {fakeNews: 1});
-    if(newsdata) {
-      const update = await this.news.updateOne({newsId: newsId}, { fakeNews : newsdata.fakeNews - 1});
+    const newsdata = await this.news.findOne(
+      { newsId: newsId },
+      { fakeNews: 1 }
+    );
+    if (newsdata) {
+      const update = await this.news.updateOne(
+        { newsId: newsId },
+        { fakeNews: newsdata.fakeNews - 1 }
+      );
     } else {
       throw new Error("can't read newsData for newsId");
       return;
     }
     const deleted = await this.news.deleteMany(deleteData);
     return deleted.deletedCount! > 0;
-  }
+  };
 }
 
 export default newsService;
