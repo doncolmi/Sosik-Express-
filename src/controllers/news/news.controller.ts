@@ -27,10 +27,20 @@ class NewsController implements Controller {
       this.getNewsListByPress
     );
     this.router.get(
+      `${this.path}/press/name`,
+      this.auth.hasAuth,
+      this.getPressNameList
+    );
+    this.router.get(
       `${this.path}/topic`,
       this.auth.hasAuth,
       this.getFirstNewsListByTopic,
       this.getNewsListByTopic
+    );
+    this.router.get(
+      `${this.path}/topic/name`,
+      this.auth.hasAuth,
+      this.getTopicNameList
     );
     this.router.get(
       `${this.path}/press/:name`,
@@ -133,6 +143,19 @@ class NewsController implements Controller {
     }
   };
 
+  private getPressNameList = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const date: string = req.query.date as string;
+    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
+    const pressfollowList = await this.newsService.getPressFollowNameList(
+      userInfo!.userId
+    );
+    res.json(pressfollowList).end();
+  };
+
   private getFirstNewsListByTopic = async (
     req: Request,
     res: Response,
@@ -176,6 +199,19 @@ class NewsController implements Controller {
         .then((result: any) => res.json(result))
         .catch((err: Error) => next(err));
     }
+  };
+
+  private getTopicNameList = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    const date: string = req.query.date as string;
+    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
+      const topicFollowList = await this.newsService.getTopicFollowNameList(
+        userInfo!.userId
+      );
+      res.json(topicFollowList).end();
   };
 
   private getFirstNewsByOnlyPress = async (

@@ -192,20 +192,24 @@ class newsService {
 
   public getPressFollowList = async (userId: number) => {
     const PressFollow = await this.pressFollow.find({ userId: userId });
-    const PressFollowList: any = [];
-    PressFollow.map((element) => {
-      PressFollowList.push({ pressId: element.pressId });
-    });
-    return PressFollowList;
+    return PressFollow.map((element) => ({ pressId: element.pressId }));
+  };
+
+  public getPressFollowNameList = async (userId: number) => {
+    const PressFollow = await this.pressFollow.find({ userId: userId });
+    const PressIdList = PressFollow.map((element) => ({ pressId: element.pressId }));
+    const PressName = await this.press.find().or(PressIdList);
+    return PressName.map((element) => ( element.pressName ));
   };
 
   public getTopicFollowList = async (userId: number) => {
-    const topicFollow = await this.topicFollow.find({ userId: userId });
-    const topicFollowList: any = [];
-    topicFollow.map((element) => {
-      topicFollowList.push({ topicName: element.topicName });
-    });
-    return topicFollowList;
+    const TopicFollow = await this.topicFollow.find({ userId: userId });
+    return TopicFollow.map((element) => ({ topicName: element.topicName }));
+  };
+
+  public getTopicFollowNameList = async (userId: number) => {
+    const TopicFollow = await this.topicFollow.find({ userId: userId });
+    return TopicFollow.map((element) => (element.topicName));
   };
 
   public getIsFakeNewsLog = async (userId: number, newsId: string) => {
