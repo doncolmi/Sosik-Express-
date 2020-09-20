@@ -20,6 +20,9 @@ class SaveController implements Controller {
       this.getFirstSaveNewsList,
       this.getSaveNewsList
     );
+    this.router.get(`${this.path}/:newsId`, this.auth.hasAuth, this.getIsSaved);
+    this.router.post(`${this.path}`, this.auth.hasAuth, this.saveNews);
+    this.router.delete(`${this.path}`, this.auth.hasAuth, this.deleteSaveNews);
   }
 
   private getFirstSaveNewsList = async (
@@ -27,12 +30,29 @@ class SaveController implements Controller {
     res: Response,
     next: NextFunction
   ) => {
-    if (req.query.date) next();
+    if (req.query.page) next();
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
       );
       res.json(await this.saveService.getFirstSaveNews(userId)).end();
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  private getIsSaved = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      res
+        .json(await this.saveService.getIsSaved(userId, req.params.newsId))
+        .end();
     } catch (e) {
       next(e);
     }
@@ -44,11 +64,45 @@ class SaveController implements Controller {
     next: NextFunction
   ) => {
     try {
-      const date: string = req.query.date as string;
+      const page: number = +req.query.page!;
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
       );
-      res.json(await this.saveService.getSaveNews(userId, date)).end();
+      res.json(await this.saveService.getSaveNews(userId, page)).end();
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  private saveNews = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      res
+        .json(await this.saveService.postSaveNews(userId, req.body.newsId))
+        .end();
+    } catch (e) {
+      next(e);
+    }
+  };
+
+  private deleteSaveNews = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const { userId }: any = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
+      res
+        .json(await this.saveService.deleteSaveNews(userId, req.body.newsId))
+        .end();
     } catch (e) {
       next(e);
     }

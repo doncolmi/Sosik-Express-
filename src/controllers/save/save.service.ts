@@ -16,13 +16,43 @@ class PressService {
     return getSaveNews;
   };
 
-  public getSaveNews = async (userId: number, date: string) => {
-    const saveNewsList = await this.getSaveNewsList(userId, date);
+  public getSaveNews = async (userId: number, page: number) => {
+    const saveNewsList = await this.getSaveNewsList(userId, page);
     const getSaveNews = await this.news
       .find()
       .or(saveNewsList)
       .sort({ createdDate: -1 });
     return getSaveNews;
+  };
+
+  public getIsSaved = async (
+    userId: number,
+    newsId: string
+  ): Promise<boolean> => {
+    const cntData: SaveNews = {
+      newsId: newsId,
+      userId: userId,
+    };
+    const cntSaved: number = await this.saveNews.countDocuments(cntData);
+    return cntSaved > 0;
+  };
+
+  public postSaveNews = async (userId: number, newsId: string) => {
+    const saveData: SaveNews = {
+      newsId: newsId,
+      userId: userId,
+    };
+    const postSaveNews = await new this.saveNews(saveData).save();
+    return postSaveNews.userId === userId;
+  };
+
+  public deleteSaveNews = async (userId: number, newsId: string) => {
+    const deleteData: SaveNews = {
+      newsId: newsId,
+      userId: userId,
+    };
+    const deleteSaveNews = await this.saveNews.deleteMany(deleteData);
+    return deleteSaveNews.deletedCount! > 0;
   };
 
   private getFirstSaveNewsList = async (userId: number) => {
@@ -37,15 +67,12 @@ class PressService {
     }
   };
 
-  private getSaveNewsList = async (userId: number, date: string) => {
+  private getSaveNewsList = async (userId: number, page: number) => {
     try {
-      // 하 이거 어떠케 하지?
-      // 일단 진짜 news의 Date를 사용할지
-      // 아니면 해당 news의 id값으로 조회할지 엄청난 고민을 해야할 거 같습니다...
-      // 구조 다시자십시오...
       const saveNewsList = await this.saveNews
-        .find({ userId: userId, createdDate: { $lt: new Date(date) } })
+        .find({ userId: userId })
         .sort({ createdDate: -1 })
+        .skip((page - 1) * 10)
         .limit(10);
       return saveNewsList.map((element: any) => ({ newsId: element.newsId }));
     } catch (e) {
