@@ -11,7 +11,7 @@ const newsSchema = new Schema({
   pressName: String,
   topicName: { type: String, index: true },
   fakeNews: { type: Number, default: 0 },
-  createdDate: { type: Date, default: Date.now },
+  createdDate: { type: Date, default: Date.now, index: true },
   modifiedDate: { type: Date, default: Date.now },
 });
 

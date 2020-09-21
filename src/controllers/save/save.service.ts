@@ -43,7 +43,7 @@ class PressService {
       userId: userId,
     };
     const postSaveNews = await new this.saveNews(saveData).save();
-    return postSaveNews.userId === userId;
+    return postSaveNews.userId == userId;
   };
 
   public deleteSaveNews = async (userId: number, newsId: string) => {
@@ -72,7 +72,7 @@ class PressService {
       const saveNewsList = await this.saveNews
         .find({ userId: userId })
         .sort({ createdDate: -1 })
-        .skip((page - 1) * 10)
+        .skip(page * 10)
         .limit(10);
       return saveNewsList.map((element: any) => ({ newsId: element.newsId }));
     } catch (e) {

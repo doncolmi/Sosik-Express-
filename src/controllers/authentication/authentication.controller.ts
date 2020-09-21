@@ -35,7 +35,7 @@ class AuthenticationController implements Controller {
           `https://kauth.kakao.com/oauth/token?grant_type=refresh_token&client_id=${process.env.CLIENT_ID}&refresh_token=${refreshToken}&client_secret=${process.env.CLIENT_SECRET}`
         )
         .then(({ data }) => {
-          res.json({ status: true, token: data.access_token }).end();
+          res.json({ status: true, token: data.access_token}).end();
         })
         .catch((err) => {
           res.json({ status: false }).end();
@@ -45,21 +45,24 @@ class AuthenticationController implements Controller {
     }
   };
 
-  private login = (req: Request, res: Response, next: NextFunction) => {
-    const { userId, refreshToken, tokenExp }: UserDTO = req.body;
-    this.user
-      .findOne({ userId: userId })
-      .then((user) => {
-        if (user) {
-          res.cookie("refreshToken", refreshToken, {
-            maxAge: tokenExp,
-          });
-          res.json(true);
-          return;
+  private login = async (req: Request, res: Response, next: NextFunction) => {
+    try{
+      const { userId, refreshToken, tokenExp, profileImage, thumbnailImage }: UserDTO = req.body;
+      const userInfo = await this.user.findOne({ userId: userId });
+      if(userInfo) {
+        if(userInfo.profileImage !== profileImage) {
+          this.user.updateOne({ userId: userId }, { $set : { profileImage: profileImage, thumbnailImage: thumbnailImage} });
         }
+        res.cookie("refreshToken", refreshToken, {
+          maxAge: tokenExp,
+        });
+        res.json(true).end();
+      } else {
         next();
-      })
-      .catch((err: Error) => next(err));
+      }
+    } catch(e) {
+      next(e);
+    }
   };
 
   private save = (req: Request, res: Response, next: NextFunction) => {

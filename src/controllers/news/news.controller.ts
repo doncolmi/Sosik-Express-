@@ -112,13 +112,14 @@ class NewsController implements Controller {
       const pressfollowList = await this.newsService.getPressFollowList(
         userInfo.userId
       );
+      if(pressfollowList.length === 0) res.status(500).json({err: 'empty array'}).end();
       this.news
-        .find()
-        .or(pressfollowList)
-        .sort({ createdDate: -1 })
-        .limit(10)
-        .then((result: any) => res.json(result))
-        .catch((err: Error) => next(err));
+      .find()
+      .or(pressfollowList)
+      .sort({ createdDate: -1 })
+      .limit(10)
+      .then((result: any) => res.json(result))
+      .catch((err: Error) => next(err));
     }
   };
 

@@ -20,6 +20,12 @@ class SaveController implements Controller {
       this.getFirstSaveNewsList,
       this.getSaveNewsList
     );
+    this.router.get(
+      `${this.path}/all`,
+      this.auth.hasAuth,
+      this.getFirstSaveNewsList,
+      this.getSaveNewsList
+    );
     this.router.get(`${this.path}/:newsId`, this.auth.hasAuth, this.getIsSaved);
     this.router.post(`${this.path}`, this.auth.hasAuth, this.saveNews);
     this.router.delete(`${this.path}`, this.auth.hasAuth, this.deleteSaveNews);
