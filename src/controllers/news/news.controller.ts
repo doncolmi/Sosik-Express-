@@ -1,8 +1,17 @@
-import { Request, Response, NextFunction, Router } from "express";
+import {
+  Request as Req,
+  Response as Res,
+  NextFunction as Next,
+  Router,
+} from "express";
 import Controller from "../../interfaces/controller.interface";
-import NewsModel from "./news.model";
-import AuthenticationService from "../authentication/authentication.service";
+
 import NewsService from "./news.service";
+import AuthenticationService from "../authentication/authentication.service";
+
+import NewsModel from "./news.model";
+
+import error from "../../middleware/error.middleware";
 
 class NewsController implements Controller {
   public path = "/news";
@@ -14,17 +23,18 @@ class NewsController implements Controller {
   constructor() {
     this.initializeRoutes();
   }
+
   private initializeRoutes() {
     this.router.get(
       `${this.path}`,
-      this.getFirstNewsListAll,
-      this.getNewsListAll
+      this.getAllNewsListFirst,
+      this.getAllNewsList
     );
     this.router.get(
       `${this.path}/press`,
       this.auth.hasAuth,
-      this.getFirstNewsListByPress,
-      this.getNewsListByPress
+      this.getPressNewsListFirst,
+      this.getPressNewsList
     );
     this.router.get(
       `${this.path}/press/name`,
@@ -34,8 +44,8 @@ class NewsController implements Controller {
     this.router.get(
       `${this.path}/topic`,
       this.auth.hasAuth,
-      this.getFirstNewsListByTopic,
-      this.getNewsListByTopic
+      this.getTopicNewsListFirst,
+      this.getTopicNewsList
     );
     this.router.get(
       `${this.path}/topic/name`,
@@ -67,159 +77,148 @@ class NewsController implements Controller {
     );
   }
 
-  private getFirstNewsListAll = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    if (req.query.date) {
-      next();
-      return;
+  private getAllNewsListFirst = async (req: Req, res: Res, next: Next) => {
+    if (req.query.date) next();
+    else {
+      try {
+        const newsList = await this.news
+          .find({})
+          .sort({ createdDate: -1 })
+          .limit(10);
+        res.json(newsList).end();
+      } catch (e) {
+        error(e, req, res, next);
+      }
     }
-    this.news
-      .find({})
-      .sort({ createdDate: -1 })
-      .limit(10)
-      .then((result: any) => res.json(result))
-      .catch((err: Error) => next(err));
   };
 
-  private getNewsListAll = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    const date: string = req.query.date as string;
-    this.news
-      .find({ createdDate: { $lt: new Date(date) } })
-      .sort({ createdDate: -1 })
-      .limit(10)
-      .then((result: any) => res.json(result))
-      .catch((err: Error) => next(err));
+  private getAllNewsList = async (req: Req, res: Res, next: Next) => {
+    try {
+      const date: string = req.query.date as string;
+      const newsList = await this.news
+        .find({ createdDate: { $lt: new Date(date) } })
+        .sort({ createdDate: -1 })
+        .limit(10);
+      res.json(newsList).end();
+    } catch (e) {
+      error(e, req, res, next);
+    }
   };
 
-  private getFirstNewsListByPress = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    if (req.query.date) {
-      next();
-      return;
+  private getPressNewsListFirst = async (req: Req, res: Res, next: Next) => {
+    if (req.query.date) next();
+    else {
+      try {
+        const { userId } = await this.auth.getUserByToken(
+          req.headers.authorization!
+        );
+        const pressfollowList = await this.newsService.getPressFollowList(
+          userId
+        );
+        if (pressfollowList.length === 0)
+          res.status(500).json({ err: "empty array" }).end();
+        const newsList = await this.news
+          .find()
+          .or(pressfollowList)
+          .sort({ createdDate: -1 })
+          .limit(10);
+        res.json(newsList).end();
+      } catch (e) {
+        error(e, req, res, next);
+      }
     }
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
-    if (userInfo) {
-      const pressfollowList = await this.newsService.getPressFollowList(
-        userInfo.userId
+  };
+
+  private getPressNewsList = async (req: Req, res: Res, next: Next) => {
+    try {
+      const date: string = req.query.date as string;
+      const { userId } = await this.auth.getUserByToken(
+        req.headers.authorization!
       );
-      if(pressfollowList.length === 0) res.status(500).json({err: 'empty array'}).end();
-      this.news
-      .find()
-      .or(pressfollowList)
-      .sort({ createdDate: -1 })
-      .limit(10)
-      .then((result: any) => res.json(result))
-      .catch((err: Error) => next(err));
-    }
-  };
-
-  private getNewsListByPress = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    const date: string = req.query.date as string;
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
-    if (userInfo) {
-      const pressfollowList = await this.newsService.getPressFollowList(
-        userInfo.userId
-      );
-      this.news
+      const pressfollowList = await this.newsService.getPressFollowList(userId);
+      const newsList = await this.news
         .find({ createdDate: { $lt: new Date(date) } })
         .or(pressfollowList)
         .sort({ createdDate: -1 })
-        .limit(10)
-        .then((result: any) => res.json(result))
-        .catch((err: Error) => next(err));
+        .limit(10);
+      res.json(newsList).end();
+    } catch (e) {
+      error(e, req, res, next);
     }
   };
 
-  private getPressNameList = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    const date: string = req.query.date as string;
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
-    const pressfollowList = await this.newsService.getPressFollowNameList(
-      userInfo!.userId
-    );
-    res.json(pressfollowList).end();
-  };
-
-  private getFirstNewsListByTopic = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    if (req.query.date) {
-      next();
-      return;
-    }
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
-    if (userInfo) {
-      const pressFollowList = await this.newsService.getTopicFollowList(
-        userInfo.userId
+  private getPressNameList = async (req: Req, res: Res, next: Next) => {
+    try {
+      const userInfo = await this.auth.getUserByToken(
+        req.headers.authorization!
       );
-      this.news
-        .find()
-        .or(pressFollowList)
-        .sort({ createdDate: -1 })
-        .limit(10)
-        .then((result: any) => res.json(result))
-        .catch((err: Error) => next(err));
+      const pressfollowList = await this.newsService.getPressFollowNameList(
+        userInfo!.userId
+      );
+      res.json(pressfollowList).end();
+    } catch (e) {
+      error(e, req, res, next);
     }
   };
 
-  private getNewsListByTopic = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    const date: string = req.query.date as string;
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
-    if (userInfo) {
-      const topicFollowList = await this.newsService.getTopicFollowList(
-        userInfo.userId
+  private getTopicNewsListFirst = async (req: Req, res: Res, next: Next) => {
+    if (req.query.date) next();
+    else {
+      try {
+        const { userId } = await this.auth.getUserByToken(
+          req.headers.authorization!
+        );
+        const topicFollowList = await this.newsService.getTopicFollowList(
+          userId
+        );
+        if (topicFollowList.length === 0)
+          res.status(500).json({ err: "empty array" }).end();
+        const newsList = await this.news
+          .find()
+          .or(topicFollowList)
+          .sort({ createdDate: -1 })
+          .limit(10);
+        res.json(newsList).end();
+      } catch (e) {
+        error(e, req, res, next);
+      }
+    }
+  };
+
+  private getTopicNewsList = async (req: Req, res: Res, next: Next) => {
+    try {
+      const date: string = req.query.date as string;
+      const { userId } = await this.auth.getUserByToken(
+        req.headers.authorization!
       );
-      this.news
+      const topicFollowList = await this.newsService.getTopicFollowList(userId);
+      const newsList = await this.news
         .find({ createdDate: { $lt: new Date(date) } })
         .or(topicFollowList)
         .sort({ createdDate: -1 })
-        .limit(10)
-        .then((result: any) => res.json(result))
-        .catch((err: Error) => next(err));
+        .limit(10);
+      res.json(newsList).end();
+    } catch (e) {
+      error(e, req, res, next);
     }
   };
 
-  private getTopicNameList = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    const date: string = req.query.date as string;
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
+  private getTopicNameList = async (req: Req, res: Res, next: Next) => {
+    try {
+      const userInfo = await this.auth.getUserByToken(
+        req.headers.authorization!
+      );
       const topicFollowList = await this.newsService.getTopicFollowNameList(
         userInfo!.userId
       );
       res.json(topicFollowList).end();
+    } catch (e) {
+      error(e, req, res, next);
+    }
   };
 
-  private getFirstNewsByOnlyPress = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  // 여기까지 리팩토링 했습니다. 위를 참고하면서 수정해보도록 합시다.
+  private getFirstNewsByOnlyPress = async (req: Req, res: Res, next: Next) => {
     if (req.query.date) {
       next();
       return;
@@ -235,11 +234,7 @@ class NewsController implements Controller {
     }
   };
 
-  private getNewsByOnlyPress = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private getNewsByOnlyPress = async (req: Req, res: Res, next: Next) => {
     const date: string = req.query.date as string;
     const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
     if (userInfo) {
@@ -256,11 +251,7 @@ class NewsController implements Controller {
     }
   };
 
-  private getFirstNewsByOnlyTopic = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private getFirstNewsByOnlyTopic = async (req: Req, res: Res, next: Next) => {
     if (req.query.date) {
       next();
       return;
@@ -276,11 +267,7 @@ class NewsController implements Controller {
     }
   };
 
-  private getNewsByOnlyTopic = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private getNewsByOnlyTopic = async (req: Req, res: Res, next: Next) => {
     const date: string = req.query.date as string;
     const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
     if (userInfo) {
@@ -297,11 +284,7 @@ class NewsController implements Controller {
     }
   };
 
-  private getIsFakeNewsLog = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private getIsFakeNewsLog = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
@@ -317,11 +300,7 @@ class NewsController implements Controller {
     }
   };
 
-  private saveFakeNews = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private saveFakeNews = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
@@ -337,11 +316,7 @@ class NewsController implements Controller {
     }
   };
 
-  private deleteFakeNews = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private deleteFakeNews = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!

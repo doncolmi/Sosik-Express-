@@ -4,7 +4,7 @@ import { test } from "./controllers/news/news.cron";
 
 import * as bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
-import { connect } from "mongoose";
+import { connect, set } from "mongoose";
 import cors from "cors";
 
 import Controller from "./interfaces/controller.interface";
@@ -54,7 +54,7 @@ class App {
     });
   }
 
-  private connectMongoDB() {
+  private async connectMongoDB() {
     const {
       MONGO_USER,
       MONGO_PASSWORD,
@@ -62,6 +62,7 @@ class App {
       MONGO_PORT,
       MONGO_DBNAME,
     } = process.env;
+    await set("useCreateIndex", true);
     connect(
       `mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_DB}:${MONGO_PORT}/${MONGO_DBNAME}`,
       {

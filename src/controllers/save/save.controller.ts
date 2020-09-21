@@ -14,38 +14,16 @@ class SaveController implements Controller {
     this.initializeRoutes();
   }
   private initializeRoutes() {
-    this.router.get(
-      `${this.path}`,
-      this.auth.hasAuth,
-      this.getFirstSaveNewsList,
-      this.getSaveNewsList
-    );
+    this.router.get(`${this.path}`, this.auth.hasAuth, this.getSaveNewsList);
     this.router.get(
       `${this.path}/all`,
       this.auth.hasAuth,
-      this.getFirstSaveNewsList,
       this.getSaveNewsList
     );
     this.router.get(`${this.path}/:newsId`, this.auth.hasAuth, this.getIsSaved);
     this.router.post(`${this.path}`, this.auth.hasAuth, this.saveNews);
     this.router.delete(`${this.path}`, this.auth.hasAuth, this.deleteSaveNews);
   }
-
-  private getFirstSaveNewsList = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
-    if (req.query.page) next();
-    try {
-      const { userId }: any = await this.auth.getUserByToken(
-        req.headers.authorization!
-      );
-      res.json(await this.saveService.getFirstSaveNews(userId)).end();
-    } catch (e) {
-      next(e);
-    }
-  };
 
   private getIsSaved = async (
     req: Request,
