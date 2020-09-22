@@ -70,6 +70,7 @@ class AuthenticationController implements Controller {
             maxAge: tokenExp,
             path: "/",
             httpOnly: true,
+            sameSite: "none",
           })
           .json(true)
           .end();
@@ -90,6 +91,7 @@ class AuthenticationController implements Controller {
           maxAge: saveUserData.tokenExp,
           path: "/",
           httpOnly: true,
+          sameSite: "none",
         })
         .json(false)
         .end();
