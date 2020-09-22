@@ -1,6 +1,6 @@
 import Express, { Application } from "express";
 
-import { test } from "./controllers/news/news.cron";
+// import { test } from "./controllers/news/news.cron";
 
 import * as bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -20,7 +20,7 @@ class App {
     this.initializeMiddlewares();
     this.initializeErrorHandling();
     this.initializeControllers(controllers);
-    test;
+    // test;
   }
 
   public listen() {
