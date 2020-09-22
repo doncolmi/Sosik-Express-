@@ -38,8 +38,8 @@ class AuthenticationService {
             },
           }
         );
-        return true;
       }
+      return true;
     }
     return false;
   };

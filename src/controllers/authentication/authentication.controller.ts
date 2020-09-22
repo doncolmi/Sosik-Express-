@@ -11,6 +11,7 @@ import AuthenticationService from "./authentication.service";
 import UserModel from "../user/user.model";
 import UserDTO from "../user/user.dto";
 
+import cookie from "../../middleware/cookie.middleware";
 import validate from "../../middleware/validation.middleware";
 import error from "../../middleware/error.middleware";
 import axios from "axios";
@@ -64,19 +65,9 @@ class AuthenticationController implements Controller {
         profileImage,
         thumbnailImage
       );
-      if (updated) {
-        res
-          .cookie("refreshToken", refreshToken, {
-            maxAge: tokenExp,
-            path: "/",
-            httpOnly: true,
-            sameSite: "none",
-          })
-          .json(true)
-          .end();
-      } else {
-        next();
-      }
+      if (updated)
+        cookie(true, tokenExp!, refreshToken!, "refreshToken", req, res, next);
+      else next();
     } catch (e) {
       error(e, req, res, next);
     }
@@ -85,16 +76,9 @@ class AuthenticationController implements Controller {
   private save = async (req: Req, res: Res, next: Next) => {
     try {
       const saveUserData: UserDTO = req.body;
+      const { tokenExp, refreshToken } = saveUserData;
       await new this.user(saveUserData).save();
-      res
-        .cookie("refreshToken", saveUserData.refreshToken, {
-          maxAge: saveUserData.tokenExp,
-          path: "/",
-          httpOnly: true,
-          sameSite: "none",
-        })
-        .json(false)
-        .end();
+      cookie(false, tokenExp!, refreshToken!, "refreshToken", req, res, next);
     } catch (e) {
       error(e, req, res, next);
     }
