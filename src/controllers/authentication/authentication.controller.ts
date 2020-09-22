@@ -69,6 +69,7 @@ class AuthenticationController implements Controller {
           .cookie("refreshToken", refreshToken, {
             maxAge: tokenExp,
             path: "/",
+            httpOnly: true,
           })
           .json(true)
           .end();
@@ -87,6 +88,8 @@ class AuthenticationController implements Controller {
       res
         .cookie("refreshToken", saveUserData.refreshToken, {
           maxAge: saveUserData.tokenExp,
+          path: "/",
+          httpOnly: true,
         })
         .json(false)
         .end();
