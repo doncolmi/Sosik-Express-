@@ -1,7 +1,15 @@
-import { Request, Response, NextFunction, Router } from "express";
+import {
+  Request as Req,
+  Response as Res,
+  NextFunction as Next,
+  Router,
+} from "express";
 import Controller from "../../interfaces/controller.interface";
+
 import AuthenticationService from "../authentication/authentication.service";
 import TopicService from "./topic.service";
+
+import error from "../../middleware/error.middleware";
 
 class TopicController implements Controller {
   public path = "/topic";
@@ -26,11 +34,7 @@ class TopicController implements Controller {
     );
   }
 
-  private getTopicFollow = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private getTopicFollow = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
@@ -38,15 +42,11 @@ class TopicController implements Controller {
       const topicNameList = await this.topic.getTopicFollow(userId);
       res.json(topicNameList).end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 
-  private doFollow = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private doFollow = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
@@ -54,15 +54,11 @@ class TopicController implements Controller {
       const TopicName = this.topic.getTopicName(req.body.topicId);
       res.json(await this.topic.doFollow(userId, TopicName)).end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 
-  private doUnFollow = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private doUnFollow = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
@@ -70,27 +66,19 @@ class TopicController implements Controller {
       const TopicName = this.topic.getTopicName(req.body.topicId);
       res.json(await this.topic.doUnFollow(userId, TopicName)).end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 
-  private getTopic = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private getTopic = async (req: Req, res: Res, next: Next) => {
     try {
       res.json(await this.topic.getTopic(req.params.name)).end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 
-  private getTopicFollowOne = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private getTopicFollowOne = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
@@ -99,7 +87,7 @@ class TopicController implements Controller {
         .json(await this.topic.getTopicFollowOne(userId, req.params.name))
         .end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 }

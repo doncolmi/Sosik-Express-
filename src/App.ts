@@ -26,6 +26,7 @@ class App {
   public listen() {
     this.app.listen(process.env.PORT, () => {
       console.log(`${process.env.PORT}번 포트로 서버가 열렸습니다.`);
+      console.log(`현재 ${process.pid}에서 실행중입니다.`);
     });
   }
 

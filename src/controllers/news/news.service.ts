@@ -2,12 +2,14 @@ import axios, { AxiosResponse } from "axios";
 import cheerio from "cheerio";
 import iconv from "iconv-lite";
 
-import { logger } from "../../middleware/winston.middleware";
-
-import Topic from "../topic/topic.service";
-import { replaceContent } from "../../utils/newsReplace";
 import * as Inews from "./news.interface";
 import * as Ipress from "../press/press.interface";
+
+import TopicService from "../topic/topic.service";
+
+import { logger } from "../../middleware/winston.middleware";
+import { replaceContent } from "../../utils/newsReplace";
+
 import newsModel from "./news.model";
 import pressModel from "../press/press.model";
 import pressFollowModel from "../press/pressFollow.model";
@@ -20,16 +22,17 @@ class newsService {
   private pressFollow = pressFollowModel;
   private topicFollow = topicFollowModel;
   private fakeNewsLog = fakeNewsLogModel;
-  private topic = new Topic();
+  private topic = new TopicService();
 
   public doCrawling = async () => {
+    console.log("크롤링 실행중");
     const Topics = this.topic.getTopicId();
     Topics.forEach(async (Topic) => {
       const NewsHrefList = await this.getNewsHrefList(Topic);
       const NewsList = await this.checkDuplicate(NewsHrefList);
       const PressSetList = await this.getPressSetList(NewsList);
-      await this.savePress(PressSetList);
-      NewsList.forEach(async (News) => {
+      this.savePress(PressSetList);
+      NewsList.forEach((News) => {
         this.getContents(News.href!)
           .then((res) => {
             this.saveNews(News, res);
@@ -37,6 +40,7 @@ class newsService {
           .catch((err) => logger.error(err));
       });
     });
+    console.log("크롤링 실행 종료");
   };
 
   private crawling = (url: string): Promise<any> => {
@@ -197,9 +201,11 @@ class newsService {
 
   public getPressFollowNameList = async (userId: number) => {
     const PressFollow = await this.pressFollow.find({ userId: userId });
-    const PressIdList = PressFollow.map((element) => ({ pressId: element.pressId }));
+    const PressIdList = PressFollow.map((element) => ({
+      pressId: element.pressId,
+    }));
     const PressName = await this.press.find().or(PressIdList);
-    return PressName.map((element) => ( element.pressName ));
+    return PressName.map((element) => element.pressName);
   };
 
   public getTopicFollowList = async (userId: number) => {
@@ -209,7 +215,7 @@ class newsService {
 
   public getTopicFollowNameList = async (userId: number) => {
     const TopicFollow = await this.topicFollow.find({ userId: userId });
-    return TopicFollow.map((element) => (element.topicName));
+    return TopicFollow.map((element) => element.topicName);
   };
 
   public getIsFakeNewsLog = async (userId: number, newsId: string) => {

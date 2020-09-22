@@ -27,18 +27,21 @@ class AuthenticationService {
     newThumbnailImage: string
   ): Promise<boolean> => {
     const userInfo = await this.user.findOne({ userId: userId });
-    if (userInfo!.profileImage === newProfileImg) {
-      this.user.updateOne(
-        { userId: userId },
-        {
-          $set: {
-            profileImage: newProfileImg,
-            thumbnailImage: newThumbnailImage,
-          },
-        }
-      );
-      return true;
-    } else return false;
+    if (userInfo) {
+      if (userInfo!.profileImage === newProfileImg) {
+        this.user.updateOne(
+          { userId: userId },
+          {
+            $set: {
+              profileImage: newProfileImg,
+              thumbnailImage: newThumbnailImage,
+            },
+          }
+        );
+        return true;
+      }
+    }
+    return false;
   };
 }
 

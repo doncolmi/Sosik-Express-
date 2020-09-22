@@ -16,7 +16,9 @@ import error from "../../middleware/error.middleware";
 class NewsController implements Controller {
   public path = "/news";
   public router = Router();
+
   private news = NewsModel;
+
   private auth = new AuthenticationService();
   private newsService = new NewsService();
 
@@ -55,14 +57,14 @@ class NewsController implements Controller {
     this.router.get(
       `${this.path}/press/:name`,
       this.auth.hasAuth,
-      this.getFirstNewsByOnlyPress,
-      this.getNewsByOnlyPress
+      this.getPressNewsFirst,
+      this.getPressNews
     );
     this.router.get(
       `${this.path}/topic/:name`,
       this.auth.hasAuth,
-      this.getFirstNewsByOnlyTopic,
-      this.getNewsByOnlyTopic
+      this.getTopicNewsFirst,
+      this.getTopicNews
     );
     this.router.get(
       `${this.path}/fake/:newsId`,
@@ -217,70 +219,67 @@ class NewsController implements Controller {
     }
   };
 
-  // 여기까지 리팩토링 했습니다. 위를 참고하면서 수정해보도록 합시다.
-  private getFirstNewsByOnlyPress = async (req: Req, res: Res, next: Next) => {
-    if (req.query.date) {
-      next();
-      return;
-    }
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
-    if (userInfo) {
-      this.news
-        .find({ pressName: req.params.name })
-        .sort({ createdDate: -1 })
-        .limit(10)
-        .then((result: any) => res.json(result))
-        .catch((err: Error) => next(err));
+  private getPressNewsFirst = async (req: Req, res: Res, next: Next) => {
+    if (req.query.date) next();
+    else {
+      try {
+        const newsList = await this.news
+          .find({ pressName: req.params.name })
+          .sort({ createdDate: -1 })
+          .limit(10);
+        res.json(newsList).end();
+      } catch (e) {
+        error(e, req, res, next);
+      }
     }
   };
 
-  private getNewsByOnlyPress = async (req: Req, res: Res, next: Next) => {
-    const date: string = req.query.date as string;
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
-    if (userInfo) {
-      this.news
+  private getPressNews = async (req: Req, res: Res, next: Next) => {
+    try {
+      const date: string = req.query.date as string;
+      const newsList = await this.news
         .find()
         .and([
           { pressName: req.params.name },
           { createdDate: { $lt: new Date(date) } },
         ])
         .sort({ createdDate: -1 })
-        .limit(10)
-        .then((result: any) => res.json(result))
-        .catch((err: Error) => next(err));
+        .limit(10);
+      res.json(newsList).end();
+    } catch (e) {
+      error(e, req, res, next);
     }
   };
 
-  private getFirstNewsByOnlyTopic = async (req: Req, res: Res, next: Next) => {
-    if (req.query.date) {
-      next();
-      return;
-    }
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
-    if (userInfo) {
-      this.news
-        .find({ topicName: req.params.name })
-        .sort({ createdDate: -1 })
-        .limit(10)
-        .then((result: any) => res.json(result))
-        .catch((err: Error) => next(err));
+  private getTopicNewsFirst = async (req: Req, res: Res, next: Next) => {
+    if (req.query.date) next();
+    else {
+      try {
+        const newsList = await this.news
+          .find({ topicName: req.params.name })
+          .sort({ createdDate: -1 })
+          .limit(10);
+        res.json(newsList).end();
+      } catch (e) {
+        error(e, req, res, next);
+      }
     }
   };
 
-  private getNewsByOnlyTopic = async (req: Req, res: Res, next: Next) => {
-    const date: string = req.query.date as string;
-    const userInfo = await this.auth.getUserByToken(req.headers.authorization!);
-    if (userInfo) {
-      this.news
+  private getTopicNews = async (req: Req, res: Res, next: Next) => {
+    try {
+      const date: string = req.query.date as string;
+      const newsList = await this.news
         .find()
         .and([
           { topicName: req.params.name },
           { createdDate: { $lt: new Date(date) } },
         ])
         .sort({ createdDate: -1 })
-        .limit(10)
-        .then((result: any) => res.json(result))
-        .catch((err: Error) => next(err));
+        .limit(10);
+      res.json(newsList).end();
+    } catch (e) {
+      error(e, req, res, next);
     }
   };
 
@@ -296,7 +295,7 @@ class NewsController implements Controller {
       );
       res.json(getFakeNewsLog).end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 
@@ -312,7 +311,7 @@ class NewsController implements Controller {
       );
       res.json(saveFakeNews).end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 
@@ -327,7 +326,7 @@ class NewsController implements Controller {
       );
       res.json(deleteFakeNews).end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 }

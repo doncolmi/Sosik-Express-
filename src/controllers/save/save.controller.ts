@@ -1,7 +1,15 @@
-import { Request, Response, NextFunction, Router } from "express";
+import {
+  Request as Req,
+  Response as Res,
+  NextFunction as Next,
+  Router,
+} from "express";
 import Controller from "../../interfaces/controller.interface";
+
 import AuthenticationService from "../authentication/authentication.service";
 import SaveService from "./save.service";
+
+import error from "../../middleware/error.middleware";
 
 class SaveController implements Controller {
   public path = "/save";
@@ -25,11 +33,7 @@ class SaveController implements Controller {
     this.router.delete(`${this.path}`, this.auth.hasAuth, this.deleteSaveNews);
   }
 
-  private getIsSaved = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private getIsSaved = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
@@ -38,15 +42,11 @@ class SaveController implements Controller {
         .json(await this.saveService.getIsSaved(userId, req.params.newsId))
         .end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 
-  private getSaveNewsList = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private getSaveNewsList = async (req: Req, res: Res, next: Next) => {
     try {
       const page: number = +req.query.page!;
       const { userId }: any = await this.auth.getUserByToken(
@@ -54,15 +54,11 @@ class SaveController implements Controller {
       );
       res.json(await this.saveService.getSaveNews(userId, page)).end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 
-  private saveNews = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private saveNews = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
@@ -71,15 +67,11 @@ class SaveController implements Controller {
         .json(await this.saveService.postSaveNews(userId, req.body.newsId))
         .end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 
-  private deleteSaveNews = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  private deleteSaveNews = async (req: Req, res: Res, next: Next) => {
     try {
       const { userId }: any = await this.auth.getUserByToken(
         req.headers.authorization!
@@ -88,7 +80,7 @@ class SaveController implements Controller {
         .json(await this.saveService.deleteSaveNews(userId, req.body.newsId))
         .end();
     } catch (e) {
-      next(e);
+      error(e, req, res, next);
     }
   };
 }

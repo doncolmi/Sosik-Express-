@@ -3,7 +3,7 @@ import newsModel from "../news/news.model";
 
 import { SaveNews } from "./save.interface";
 
-class PressService {
+class SaveService {
   private saveNews = saveModel;
   private news = newsModel;
 
@@ -56,29 +56,21 @@ class PressService {
   };
 
   private getFirstSaveNewsList = async (userId: number) => {
-    try {
-      const saveNewsList = await this.saveNews
-        .find({ userId: userId })
-        .sort({ createdDate: -1 })
-        .limit(10);
-      return saveNewsList.map((element: any) => ({ newsId: element.newsId }));
-    } catch (e) {
-      throw new Error(e);
-    }
+    const saveNewsList = await this.saveNews
+      .find({ userId: userId })
+      .sort({ createdDate: -1 })
+      .limit(10);
+    return saveNewsList.map((element: any) => ({ newsId: element.newsId }));
   };
 
   private getSaveNewsList = async (userId: number, page: number) => {
-    try {
-      const saveNewsList = await this.saveNews
-        .find({ userId: userId })
-        .sort({ createdDate: -1 })
-        .skip(page * 10)
-        .limit(10);
-      return saveNewsList.map((element: any) => ({ newsId: element.newsId }));
-    } catch (e) {
-      throw new Error(e);
-    }
+    const saveNewsList = await this.saveNews
+      .find({ userId: userId })
+      .sort({ createdDate: -1 })
+      .skip(page * 10)
+      .limit(10);
+    return saveNewsList.map((element: any) => ({ newsId: element.newsId }));
   };
 }
 
-export default PressService;
+export default SaveService;

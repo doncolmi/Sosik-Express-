@@ -18,7 +18,8 @@ import axios from "axios";
 class AuthenticationController implements Controller {
   public path = "/auth";
   public router = Router();
-  public auth = new AuthenticationService();
+
+  private auth = new AuthenticationService();
   private user = UserModel;
 
   constructor() {
@@ -33,6 +34,7 @@ class AuthenticationController implements Controller {
       this.login,
       this.save
     );
+    this.router.get(`${this.path}/logout`, this.auth.hasAuth, this.logout);
   }
 
   private getCookies = async (req: Req, res: Res) => {
@@ -57,7 +59,7 @@ class AuthenticationController implements Controller {
         profileImage,
         thumbnailImage,
       }: UserDTO = req.body;
-      const updated = this.auth.updateProfileImg(
+      const updated = await this.auth.updateProfileImg(
         userId,
         profileImage,
         thumbnailImage
@@ -66,10 +68,13 @@ class AuthenticationController implements Controller {
         res
           .cookie("refreshToken", refreshToken, {
             maxAge: tokenExp,
+            path: "/",
           })
           .json(true)
           .end();
-      } else next();
+      } else {
+        next();
+      }
     } catch (e) {
       error(e, req, res, next);
     }
@@ -88,6 +93,10 @@ class AuthenticationController implements Controller {
     } catch (e) {
       error(e, req, res, next);
     }
+  };
+
+  private logout = async (req: Req, res: Res, next: Next) => {
+    res.clearCookie("refreshToken", { path: "/" }).json(true);
   };
 }
 
