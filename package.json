@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "ts-node src/www.ts",
     "dev": "nodemon --watch src --delay 1 --exec ts-node src/www.ts",
     "build": "webpack --config webpack.config.js",
     "lint": "tslint -p tsconfig.json -c tslint.json",
