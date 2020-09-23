@@ -13,8 +13,9 @@ function CookieMiddleware(
     maxAge: tokenExp,
     path: "/",
     httpOnly: true,
-    sameSite: "none",
-    secure: false,
+    sameSite: "lax",
+    secure: true,
+    domain: ".limc-pf.com",
   };
   res.cookie(name, cookie, config).json(bool).end();
 }
