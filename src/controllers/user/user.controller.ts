@@ -50,7 +50,13 @@ class UserController implements Controller {
         req.headers.authorization!
       );
       const deleteUser = this.user.deleteUser(userId);
-      res.clearCookie("refreshToken", { path: "/" }).json(deleteUser);
+      res
+        .clearCookie("refreshToken", {
+          path: "/",
+          secure: true,
+          domain: ".limc-pf.com",
+        })
+        .json(deleteUser);
     } catch (e) {
       error(e, req, res, next);
     }

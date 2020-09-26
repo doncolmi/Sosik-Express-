@@ -85,7 +85,13 @@ class AuthenticationController implements Controller {
   };
 
   private logout = async (req: Req, res: Res, next: Next) => {
-    res.clearCookie("refreshToken", { path: "/" }).json(true);
+    res
+      .clearCookie("refreshToken", {
+        path: "/",
+        secure: true,
+        domain: ".limc-pf.com",
+      })
+      .json(true);
   };
 }
 
