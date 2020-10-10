@@ -120,7 +120,7 @@ MONGO_DBNAME
 # 서버를 구동할 포트
 PORT
 
-# 카카오 클라이언트 ID
+# 카카오 클라이언트 ID(JS KEY)
 CLIENT_ID
 # 카카오 클라이언트 시크릿ID
 CLIENT_SECRET
